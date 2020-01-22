@@ -1,0 +1,20 @@
+.pdf_gallery_list {
+	width: 100%;
+	position: relative;
+}
+
+.pdf_gallery_issue {
+	margin-left: 10px;
+	float: left;
+	font-size: 90%;
+}
+
+.pdf_gallery_title {
+	width: 150px;
+	font-weight: normal;
+}
+
+.pdf_gallery_thumb {
+	width: 150px;
+	border: 1px solid grey;
+}
