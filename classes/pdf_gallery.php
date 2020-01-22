@@ -2,7 +2,7 @@
 
 namespace pdf_gallery;
 
-class Plugin_Pdf_Gallery {
+class Pdf_Gallery {
 
 	private $options;
 	private $path;
@@ -10,10 +10,19 @@ class Plugin_Pdf_Gallery {
 	private $thumb_path;
 	private $files;
 
-	public function __construct($options) {
+	private $edit;
+
+	public function __construct($options, $groups = false) {
+
+		$this->edit = false;
 
 		$this->options = $options;
 		$this->files = [];
+
+		// memberaccess integration
+		if (class_exists("\ma\Access") && \ma\Access::has_rights($groups)) {
+			$this->edit = true;
+		}
 	}
 
 
@@ -29,7 +38,7 @@ class Plugin_Pdf_Gallery {
 		foreach ($files as $file) {
 
 			// is pdf file
-			if (strtolower(pathinfo($file)['extension']) == 'pdf') {
+			if (strtolower(pathinfo($file, PATHINFO_EXTENSION)) == 'pdf') {
 
 				$this->parse_file($file);
 			}
@@ -41,7 +50,9 @@ class Plugin_Pdf_Gallery {
 
 		array_push($this->files, ["file" => $file, "text" => pathinfo($file, PATHINFO_FILENAME)]);
 
-		$this->sort($this->options['sort']);
+		if (isset($this->options["sort"])) {
+			$this->sort($this->options['sort']);
+		}
 	}
 
 
@@ -67,11 +78,30 @@ class Plugin_Pdf_Gallery {
 	// render pdf list
 	public function render() {
 
-		$o = '<div class="pdf_gallery_list">';
+		global $onload, $su;
+
+		// return script include
+		$o = '<script type="text/javascript" src="' . PDF_GALLERY_BASE . 'script/edit.js"></script>';
+		$onload .= "pdf_gallery_init('" . Text::delete_confirm() . "');";
+
+		$o .= Message::render();
+
+		$o .= '<div class="pdf_gallery_list">';
 
 		foreach ($this->files as $pdf) {
 
 			$o .= '<div class="pdf_gallery_issue">';
+
+				if ($this->edit) {
+
+					$o .= '<div class="pdf_gallery_edit">';
+						$o .= '<a class="pdf_gallery_delete" href="?' . $su . '&action=del_pdf&name=' . $this->pdf_path . $pdf["file"] . '&token=' . Session::session("xh_csrf_token") . '">';
+
+							$o .= '<img src="' . PDF_GALLERY_BASE . '/images/del.gif">';
+						$o .= '</a>';
+					$o .= '</div>';
+				}
+
 				$o .= '<a href="' . $this->pdf_path . $pdf['file'] . '" target="_blank">';
 
 
@@ -142,7 +172,7 @@ class Plugin_Pdf_Gallery {
 
 	private function get_thumb($path) {
 
-		return $o;
+		return false;
 	}
 
 }
