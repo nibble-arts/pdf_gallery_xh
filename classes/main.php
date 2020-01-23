@@ -2,72 +2,72 @@
 
 namespace pdf_gallery;
 
-class Pdf_Gallery {
+class Main {
 
-	private $options;
-	private $path;
-	private $pdf_path;
-	private $thumb_path;
-	private $files;
+	private static $options;
+	private static $path;
+	private static $pdf_path;
+	private static $thumb_path;
+	private static $files;
 
-	private $edit;
+	private static $edit;
 
-	public function __construct($options, $groups = false) {
+	public static function init ($options, $groups = false) {
 
-		$this->edit = false;
+		self::$edit = false;
 
-		$this->options = $options;
-		$this->files = [];
+		self::$options = $options;
+		self::$files = [];
 
 		// memberaccess integration
-		if (class_exists("\ma\Access") && \ma\Access::has_rights($groups)) {
-			$this->edit = true;
+		if ($groups && class_exists("\ma\Access") && \ma\Access::has_rights($groups)) {
+			self::$edit = true;
 		}
 	}
 
 
 	// load pdf files from path
-	public function load($path) {
+	public static function load($path) {
 
-		$this->path = $path;
-		$this->pdf_path = $this->options['pdf_gallery_pdf'] . $path . '/';
-		$this->thumb_path = $this->options['pdf_gallery_thumb'] . $path . '/';
+		self::$path = $path;
+		self::$pdf_path = self::$options['pdf_gallery_pdf'] . $path . '/';
+		self::$thumb_path = self::$options['pdf_gallery_thumb'] . $path . '/';
 
-		$files = scandir($this->pdf_path);
+		$files = scandir(self::$pdf_path);
 
 		foreach ($files as $file) {
 
 			// is pdf file
 			if (strtolower(pathinfo($file, PATHINFO_EXTENSION)) == 'pdf') {
 
-				$this->parse_file($file);
+				self::parse_file($file);
 			}
 		}
 	}
 
 
-	private function parse_file($file) {
+	private static function parse_file($file) {
 
-		array_push($this->files, ["file" => $file, "text" => pathinfo($file, PATHINFO_FILENAME)]);
+		array_push(self::$files, ["file" => $file, "text" => pathinfo($file, PATHINFO_FILENAME)]);
 
-		if (isset($this->options["sort"])) {
-			$this->sort($this->options['sort']);
+		if (isset(self::$options["sort"])) {
+			self::sort(self::$options['sort']);
 		}
 	}
 
 
 
 	// sort entries ASC/DESC
-	private function sort($sort) {
+	private static function sort($sort) {
 
 		switch (strtolower($sort)) {
 
 			case "asc":
-				arsort($this->files);
+				arsort(self::$files);
 				break;
 
 			case "desc":
-				krsort($this->files);
+				krsort(self::$files);
 				break;
 		}
 	}
@@ -76,7 +76,7 @@ class Pdf_Gallery {
 
 
 	// render pdf list
-	public function render() {
+	public static function render() {
 
 		global $onload, $su;
 
@@ -88,21 +88,21 @@ class Pdf_Gallery {
 
 		$o .= '<div class="pdf_gallery_list">';
 
-		foreach ($this->files as $pdf) {
+		foreach (self::$files as $pdf) {
 
 			$o .= '<div class="pdf_gallery_issue">';
 
-				if ($this->edit) {
+				if (self::$edit) {
 
 					$o .= '<div class="pdf_gallery_edit">';
-						$o .= '<a class="pdf_gallery_delete" href="?' . $su . '&action=del_pdf&name=' . $this->pdf_path . $pdf["file"] . '&token=' . Session::session("xh_csrf_token") . '">';
+						$o .= '<a class="pdf_gallery_delete" href="?' . $su . '&action=del_pdf&name=' . self::$pdf_path . $pdf["file"] . '&token=' . Session::session("xh_csrf_token") . '">';
 
 							$o .= '<img src="' . PDF_GALLERY_BASE . '/images/del.gif">';
 						$o .= '</a>';
 					$o .= '</div>';
 				}
 
-				$o .= '<a href="' . $this->pdf_path . $pdf['file'] . '" target="_blank">';
+				$o .= '<a href="' . self::$pdf_path . $pdf['file'] . '" target="_blank">';
 
 
 					$o .= '<div class="pdf_gallery_title">';
@@ -113,13 +113,13 @@ class Pdf_Gallery {
 					$o .= '<div>';
 
 						if (class_exists('Imagick')) {
-							$o .= $this->get_from_pdf($pdf['file']);
+							$o .= self::get_from_pdf($pdf['file']);
 						}
 
 						// load image
 						else {
 							// $o .= "keine Vorschau möglich";
-							$o .= $this->get_thumb($pdf['file']);
+							$o .= self::get_thumb($pdf['file']);
 						}
 					$o .= '</div>';
 
@@ -135,11 +135,11 @@ class Pdf_Gallery {
 	}
 
 
-	private function get_from_pdf($path) {
+	private static function get_from_pdf($path) {
 
 		// create thumb directory if not exists
-		if (!file_exists($this->pdf_path . 'pdf_thumb/')) {
-			if (!mkdir ($this->pdf_path . 'pdf_thumb/')) {
+		if (!file_exists(self::$pdf_path . 'pdf_thumb/')) {
+			if (!mkdir (self::$pdf_path . 'pdf_thumb/')) {
 				// $o = 'ERROR, can´t create thumb directory';
 			}
 
@@ -147,7 +147,7 @@ class Pdf_Gallery {
 
 		else {
 			
-			$thumb_path = $this->pdf_path . 'pdf_thumb/' . pathinfo($path, PATHINFO_FILENAME) . '.jpg';
+			$thumb_path = self::$pdf_path . 'pdf_thumb/' . pathinfo($path, PATHINFO_FILENAME) . '.jpg';
 
 			// create thumbnail if don't exist
 	// TODO clear thumbnails in admin
@@ -155,7 +155,7 @@ class Pdf_Gallery {
 		
 				$im = new \Imagick(); 
 				$im->setResolution(72, 72);
-				$im->readimage($this->pdf_path . $path . '[0]');
+				$im->readimage(self::$pdf_path . $path . '[0]');
 				$im->setImageFormat('jpeg'); 
 				$im->writeImage($thumb_path);
 				$im->clear(); 
@@ -170,7 +170,7 @@ class Pdf_Gallery {
 	}
 
 
-	private function get_thumb($path) {
+	private static function get_thumb($path) {
 
 		return false;
 	}

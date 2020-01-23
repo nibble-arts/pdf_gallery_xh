@@ -32,11 +32,11 @@ function pdf_gallery($path = false, $groups = false) {
 
 	global $plugin_cf;
 
-	$pdf_gallery = new pdf_gallery\Pdf_Gallery($plugin_cf['pdf_gallery'], $groups);
+	pdf_gallery\Main::init($plugin_cf['pdf_gallery'], $groups);
 
-	$pdf_gallery->load($path);
+	pdf_gallery\Main::load($path);
 
-	return $pdf_gallery->render();
+	return pdf_gallery\Main::render();
 }
 
 ?>

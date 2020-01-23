@@ -11,6 +11,7 @@ class Action {
 
 			switch (Session::param("action")) {
 
+				// delete pdf file
 				case "del_pdf":
 
 					if (file_exists(Session::param("name")) && unlink(Session::param("name"))) {
